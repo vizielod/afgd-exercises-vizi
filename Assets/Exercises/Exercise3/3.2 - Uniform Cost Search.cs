@@ -31,7 +31,36 @@ namespace AfGD.Execise3
         //
         public static void Execute(Graph graph, Node startPoint, Node endPoint, Dictionary<Node, Node> cameFrom)
         {
-            throw new NotImplementedException("Implement UniformCostSearch search algorithm here.");
+            var frontier = new PriorityQueue<Node>();
+            frontier.Enqueue(startPoint, 0);
+
+            var cost_so_far = new Dictionary<Node, float>();
+            cost_so_far[startPoint] = 0;
+
+            var neighbours = new List<Node>();
+
+            while (frontier.Count > 0)
+            {
+                Node current = frontier.Dequeue();
+
+                if (current == endPoint)
+                    break;
+
+                neighbours.Clear();
+                graph.GetNeighbours(current, neighbours);
+
+                Debug.Log("Visiting: " + current.Name);
+                foreach (Node next in neighbours)
+                {
+                    float new_cost = cost_so_far[current] + graph.GetCost(current, next);
+                    if (cost_so_far.ContainsKey(next) && !(cost_so_far[next] > new_cost)) continue;
+                    cost_so_far[next] = new_cost;
+                    cameFrom[next] = current;
+                    frontier.Enqueue(next, new_cost);
+                    
+                }
+            }
+            //throw new NotImplementedException("Implement UniformCostSearch search algorithm here.");
         }
     }
 }

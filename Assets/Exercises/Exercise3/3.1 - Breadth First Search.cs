@@ -20,9 +20,36 @@ namespace AfGD.Execise3
         //      List<T>, https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1?view=net-5.0
         //      Queue<T>, https://docs.microsoft.com/en-us/dotnet/api/system.collections.queue?view=net-5.0
         //
-        public static void Execute(Graph graph, Node start, Node goal, Dictionary<Node, Node> cameFrom)
+        public static void Execute(Graph graph, Node start, Node goal, Dictionary<Node, Node> cameFrom) //key - current, value - where i am getting from
         {
-            throw new NotImplementedException("Implement BreadthFirstSearch search algorithm here.");
+            var frontier = new Queue<Node>();
+            frontier.Enqueue(start);
+
+            var neighbours = new List<Node>();
+            cameFrom.Clear();
+            //cameFrom.Add(start, null);
+
+            while(frontier.Count > 0)
+            {
+                Node current = frontier.Dequeue();
+
+                if (current == goal)
+                    break;
+
+                neighbours.Clear();
+                graph.GetNeighbours(current, neighbours);
+
+                Debug.Log("Visiting: " + current.Name);
+                foreach(Node next in neighbours)
+                {
+                    if (!cameFrom.ContainsKey(next))
+                    {
+                        frontier.Enqueue(next);
+                        cameFrom.Add(next, current);
+                    }
+                }
+            }
+            //throw new NotImplementedException("Implement BreadthFirstSearch search algorithm here.");
         }
     }
 }
