@@ -84,9 +84,10 @@ namespace AfGD.Assignment2
             //2.2. Set joint rotations
             for (int i = 0; i < joints.Length -1; i++)
             {
-                //joints[i].position
                 var targetRotation = Quaternion.FromToRotation(jointStartDirection[i], joints[i + 1].position - joints[i].position);
+                Debug.Log("jointStartDirection" + i + " " + jointStartDirection[i]);
                 joints[i].rotation = targetRotation * startRotation[i];
+                Debug.Log("jointRotation" + i + " " + joints[i].rotation);
             }
             maxIterations = 20;
         }
@@ -97,9 +98,8 @@ namespace AfGD.Assignment2
             //2.3. Set joint limitations
             for (int i = joints.Length - 1; i > 1; i--)
             {
-                //joints[i + 1].position = RotationConstraints(joints[i - 1].position, joints[i].position, joints[i + 1].position);
                 joints[i].position = RotationConstraints(joints[i - 2].position, joints[i-1].position, joints[i].position);
-                Debug.Log("Forward - Joint number: " + i + " " + joints[i].position);
+                //Debug.Log("Forward - Joint number: " + i + " " + joints[i].position);
             }
 
             //2.1. Set the end effector Pn as target T
@@ -121,7 +121,7 @@ namespace AfGD.Assignment2
             for (int i = 2; i <= joints.Length - 1; i++)
             {
                 joints[i].position = RotationConstraints(joints[i - 2].position, joints[i - 1].position, joints[i].position);
-                Debug.Log("Backward - Joint number: " + i + " " + joints[i].position);
+                //Debug.Log("Backward - Joint number: " + i + " " + joints[i].position);
             }
             //2.1. set the root p1 its initial position
             joints[0].position = rootInitialPosition;
@@ -135,31 +135,43 @@ namespace AfGD.Assignment2
             }
         }
 
+        //Video tutorial of the math behind the Rotation Constraints by Henrique: https://app.vidgrid.com/view/ewgQYDgTZYnp/?sr=YHlIMmSgWzdY
         private Vector3 RotationConstraints(Vector3 prevJoint_Position, Vector3 currentJoint_Position, Vector3 nextJoint_Position)
         {
+            //Vector from prevJoint to currentJoint, this vector has no notion of position, so the tale can be the current Joint
             Vector3 l = currentJoint_Position - prevJoint_Position;
+            //Vector from currentJoint to nextJoint
             Vector3 l_n = nextJoint_Position - currentJoint_Position;
 
             //if the nextJoint target position is within the rotation Limit we can exit from this function, because we don't have to perform any corrections
             if (Vector3.Angle(l, l_n) < rotationLimit)
                 return nextJoint_Position;
 
+            //Projection of l_n on L - dot product of (l_n, l.normalized) * l.normalized, where the first mart gives a magnitude of the projection, the second gives a direction.
             Vector3 O = Vector3.Project(l_n, l);
 
+            //If the angle between l and l_n is greater than 90 degrees -> l_n points toward the previousJoint position
+            //If dot product of O and l is <0 than the angle is greater than 90 degrees.
             if (Vector3.Dot(O, l) < 0)
             {
+                //Mirror O
                 O = -O;
+                //reflect l_n to point toward direction l
                 l_n = Vector3.Reflect(l_n, l);
             }
 
+            //This is a Position from the current joint into the direction of the l vector in the distance of the projection of l_n on l. This is the O in the paper.
             Vector3 P_O = currentJoint_Position + O;
+            //The direction of the vector from P_O the the nextJoint position.
             Vector3 d = (nextJoint_Position - P_O).normalized;
 
+            //We have to convert the rotation limit from degrees to radians
             float ritationLimit_in_rad = rotationLimit * Mathf.Deg2Rad;
+            //The radius of the circle of a cone at point P_O formed by the rotationLimit angle
             //if Joint limit is > 90 degrees we will get a negative tangent value, so we would need the abs of the radius
             var r = Mathf.Abs(O.magnitude * Mathf.Tan(ritationLimit_in_rad));
 
-
+            //Reposition the nextJoint Position withing the constraint angle
             nextJoint_Position = P_O + r * d;
             return nextJoint_Position;
         }
@@ -182,7 +194,7 @@ namespace AfGD.Assignment2
                 distances[i] = (joints[i + 1].position - joints[i].position).magnitude;
                 chainLength += distances[i]; //d1+d2+...+dn-1
 
-                jointStartDirection[i] = joints[i + 1].position - joints[i].position;
+                jointStartDirection[i] = (joints[i + 1].position - joints[i].position).normalized;
                 startRotation[i] = joints[i].rotation;
             }
 
